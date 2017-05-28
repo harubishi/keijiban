@@ -16,7 +16,7 @@ namespace App\Controller;
 
 use Cake\Controller\Controller;
 use Cake\Event\Event;
-
+use Cake\ORM\TableRegistry;
 /**
  * Application Controller
  *
@@ -37,12 +37,43 @@ class AppController extends Controller
      *
      * @return void
      */
+
+    public function beforeFilter(Event $event)
+    {
+
+        $this->set('currentUserRow',TableRegistry::get('Users')->getRowById($this->Auth->user()['id']));
+
+    }
+
     public function initialize()
     {
         parent::initialize();
 
         $this->loadComponent('RequestHandler');
         $this->loadComponent('Flash');
+        $this->loadComponent('Auth',[
+            'loginAction' =>[
+                'controller' => 'Users',
+                'action' => 'login',
+            ],
+            'authenticate' => [
+                'Form' => [ // 認証の種類を指定。Form,Basic,Digestが使える。デフォルトはForm
+                    'fields' => [ // ユーザー名とパスワードに使うカラムの指定。省略した場合はusernameとpasswordになる
+                        'username' => 'name', // ユーザー名のカラムを指定
+                    ]
+                ]
+            ],
+            'loginRedirect' => [ // ログイン後に遷移するアクションを指定
+                'controller' => 'Top',
+                'action' => 'index'
+            ],
+            'logoutRedirect' => [ // ログアウト後に遷移するアクションを指定
+                'controller' => 'Users',
+                'action' => 'login',
+            ],
+             'authError' => 'ログインしてください', // ログインに失敗したときのFlashメッセージを指定(省略可)
+             'flash' =>['element' => 'error','key' => 'auth']
+        ]);
 
         /*
          * Enable the following components for recommended CakePHP security settings.
